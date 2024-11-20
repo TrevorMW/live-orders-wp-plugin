@@ -15,9 +15,6 @@ class OAuth
 
     const SCOPES = array(
         'ORDERS_READ',
-        'EMPLOYEES_READ',
-        'TIMECARDS_READ',
-        'TIMECARDS_SETTINGS_READ',
         'MERCHANT_PROFILE_READ',
         'SUBSCRIPTIONS_READ'
     );
