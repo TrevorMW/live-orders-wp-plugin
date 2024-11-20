@@ -1,5 +1,18 @@
 <?php
 
+$plugin_name = dirname( __FILE__, 2 ) ;
+
+require_once $plugin_name . '/includes/class-ajax-response.php';
+require_once $plugin_name . '/includes/class-utilities.php';
+require_once $plugin_name . '/public/class-appuser.php';
+require_once $plugin_name . '/includes/class-location.php';
+require_once $plugin_name . '/includes/class-system.php';
+require_once $plugin_name . '/public/class-order.php';
+
+require_once $plugin_name . '/vendor/autoload.php';
+
+use Square\SquareClient;
+
 /**
  * The file that defines the core plugin class
  *
@@ -122,8 +135,15 @@ class Square_Togo_Orders_App {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-square-togo-orders-app-public.php';
 
-		$this->loader = new Square_Togo_Orders_App_Loader();
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-restaurant.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-merchant.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-pos-system.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-appuser.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-money.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-oauth.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-order.php';
 
+		$this->loader = new Square_Togo_Orders_App_Loader();
 	}
 
 	/**
@@ -157,7 +177,14 @@ class Square_Togo_Orders_App {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
+		$this->loader->add_action('init', $plugin_admin, 'createPostTypes', 10, 1);
+		$this->loader->add_action('admin_init', $plugin_admin, 'createExtraSettings', 20, 1);
+		$this->loader->add_action('init', $plugin_admin, 'createAppRoles', 10, 1);
+
+		//$this->loader->add_filter('acf/load_field/name=location_id', $plugin_admin, 'acf_load_color_field_choices', 10, 1);		
+		$this->loader->add_filter('acf/load_field/name=pos_system_type', $plugin_admin, 'acf_load_pos_system_choices');		
 	}
+	
 
 	/**
 	 * Register all of the hooks related to the public-facing functionality
@@ -170,9 +197,78 @@ class Square_Togo_Orders_App {
 
 		$plugin_public = new Square_Togo_Orders_App_Public( $this->get_plugin_name(), $this->get_version() );
 
+		$oAuth = new OAuth();
+
+		// Lets create custom pages for Oauth redirection & callbacks here without creating the pages in the admin.
+		$this->loader->add_action('init', $plugin_public, 'addOAuthRewrites', 10, 1);
+		$this->loader->add_filter('template_include', $plugin_public, 'addOauthTemplates', 99);
+
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 
+		$this->loader->add_action('wp_ajax_nopriv_load_global_data', $plugin_public, 'loadGlobalData');		
+		$this->loader->add_action('wp_ajax_load_global_data', $plugin_public, 'loadGlobalData');
+
+		$this->loader->add_action('wp_ajax_nopriv_load_data', $plugin_public, 'loadData');
+		$this->loader->add_action('wp_ajax_load_data', $plugin_public, 'loadData');
+
+		$this->loader->add_action('wp_ajax_nopriv_recalc_report_data', $plugin_public, 'recalculateReportData');		
+		$this->loader->add_action('wp_ajax_recalc_report_data', $plugin_public, 'recalculateReportData');
+		
+
+		$appUser = new AppUser();
+
+		$this->loader->add_action('wp_ajax_nopriv_log_user_in', $appUser, 'logUserIn');
+		$this->loader->add_action('wp_ajax_log_user_in', $appUser, 'logUserIn');
+
+		$this->loader->add_action('wp_ajax_nopriv_log_user_out', $appUser, 'logUserOut');
+		$this->loader->add_action('wp_ajax_log_user_out', $appUser, 'logUserOut');
+
+		$this->loader->add_action('wp_ajax_nopriv_register_user', $appUser, 'registerUser');
+		$this->loader->add_action('wp_ajax_log_register_user', $appUser, 'registerUser');
+
+		$this->loader->add_action('wp_ajax_nopriv_reset_password', $appUser, 'resetPassword');
+		$this->loader->add_action('wp_ajax_reset_password', $appUser, 'resetPassword');
+
+		$merchant = new Merchant();
+
+		$this->loader->add_action('wp_ajax_nopriv_load_merchant_data', $merchant, 'loadMerchantData');
+		$this->loader->add_action('wp_ajax_load_merchant_data', $merchant, 'loadMerchantData');
+
+
+		$restaurant = new Restaurant();
+
+		$this->loader->add_action('wp_ajax_nopriv_create_new_restaurant', $restaurant, 'createNewRestaurant');
+		$this->loader->add_action('wp_ajax_log_create_new_restaurant', $restaurant, 'createNewRestaurant');
+
+		$this->loader->add_action('wp_ajax_nopriv_set_current_restaurant', $restaurant, 'setCurrentRestaurant');		
+		$this->loader->add_action('wp_ajax_set_current_restaurant', $restaurant, 'setCurrentRestaurant');
+		
+		$this->loader->add_action('wp_ajax_nopriv_unset_current_restaurant', $restaurant, 'unsetCurrentRestaurant');		
+		$this->loader->add_action('wp_ajax_unset_current_restaurant', $restaurant, 'unsetCurrentRestaurant');
+
+		$this->loader->add_action('wp_ajax_nopriv_load_restaurant_data', $restaurant, 'loadRestaurantData');
+		$this->loader->add_action('wp_ajax_load_restaurant_data', $restaurant, 'loadRestaurantData');
+
+		$this->loader->add_action('wp_ajax_nopriv_save_restaurant_settings', $restaurant, 'saveRestaurantSettings');
+		$this->loader->add_action('wp_ajax_save_restaurant_settings', $restaurant, 'saveRestaurantSettings');
+
+		$this->loader->add_action('wp_ajax_nopriv_disconnect_oauth', $restaurant, 'disconnectRestaurantOauth');
+		$this->loader->add_action('wp_ajax_disconnect_oauth', $restaurant, 'disconnectRestaurantOauth');
+
+		$this->loader->add_action('wp_ajax_nopriv_reauthorize_oauth', $restaurant, 'reauthorizeOauth');
+		$this->loader->add_action('wp_ajax_reauthorize_oauth', $restaurant, 'reauthorizeOauth');
+		
+		$this->loader->add_action('wp_ajax_nopriv_delete_restaurant', $restaurant, 'deleteRestaurant');		
+		$this->loader->add_action('wp_ajax_delete_restaurant', $restaurant, 'deleteRestaurant');
+
+		$order = new Order();
+		
+		$this->loader->add_action('wp_ajax_nopriv_load_orders_data', $order, 'loadOrdersData');		
+		$this->loader->add_action('wp_ajax_load_orders_data', $order, 'loadOrdersData');
+
+		$this->loader->add_action('wp_ajax_nopriv_load_order_data', $order, 'loadOrderData');		
+		$this->loader->add_action('wp_ajax_load_order_data', $order, 'loadOrderData');
 	}
 
 	/**
