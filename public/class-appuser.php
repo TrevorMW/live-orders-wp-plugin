@@ -128,29 +128,29 @@ class AppUser
 
         // FOR TESTING:  Oauth::refreshUserTokens();
 
-        // $crypt = new OauthCrypt();
+        $crypt = new OauthCrypt();
 
-        // $str = $crypt->encrypt('EAAAEGaXWNGc9vgaby8y4Zz4dlg8UtUpVTRfwVDFzLqvTDCLUeMOZE_iMwfbfcXV');
-        // var_dump($str);
+        $str = $crypt->encrypt('sq0csp-t7DUu59VgDH-Lu3ZIfX3S9WLvEfA8GCSyvGCdGl48S4');
+        var_dump($str);
 
         //If passwords dont match, then 
-        if(!$username){
-            $resp->status = false;
-            $resp->message = 'A password reset email could not be generated, please try again.';
+        // if(!$username){
+        //     $resp->status = false;
+        //     $resp->message = 'A password reset email could not be generated, please try again.';
            
-            echo $resp->encodeResponse();
-		    die(0);
-        }
+        //     echo $resp->encodeResponse();
+		//     die(0);
+        // }
 
-        $result = retrieve_password( $username ) ;
+        // $result = retrieve_password( $username ) ;
 
-        if(!$result){
-            $resp->status = false;
-            $resp->message = 'A password reset email could not be generated, please try again.';
-        } else {
-            $resp->status = true;
-            $resp->message = 'An password reset email has been sent to "' . $username . '"';
-        }
+        // if(!$result){
+        //     $resp->status = false;
+        //     $resp->message = 'A password reset email could not be generated, please try again.';
+        // } else {
+        //     $resp->status = true;
+        //     $resp->message = 'An password reset email has been sent to "' . $username . '"';
+        // }
 
 		echo $resp->encodeResponse();
         

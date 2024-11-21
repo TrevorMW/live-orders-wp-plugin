@@ -23,24 +23,9 @@ class Location
     {
         $locPost = null;
         // Can load a location by post ID or location ID as a meta field.
-        if ($id && is_int($id)) {
+        if ($id) {
             $locPost = get_post($id);             
         }
-
-        if ($id && !is_int($id)) {
-            $args = array(
-                'post_type' => 'location',
-                'meta_key' => 'location_id',
-                'meta_value' => '5KRB863V55X6D'
-            );
-
-            $loop = new WP_Query($args);
-
-            if($loop->have_posts()){
-                $locPost = $loop->posts[0];
-            }
-        }
-
 
         if($locPost instanceof WP_Post){
             $this->ID = $locPost->ID;
