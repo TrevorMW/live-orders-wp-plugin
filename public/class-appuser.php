@@ -130,7 +130,7 @@ class AppUser
 
         // $crypt = new OauthCrypt();
 
-        // $str = $crypt->encrypt('');
+        // $str = $crypt->encrypt('EAAAEGaXWNGc9vgaby8y4Zz4dlg8UtUpVTRfwVDFzLqvTDCLUeMOZE_iMwfbfcXV');
         // var_dump($str);
 
         //If passwords dont match, then 
