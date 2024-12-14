@@ -128,10 +128,7 @@ class AppUser
 
         // FOR TESTING:  Oauth::refreshUserTokens();
 
-        $crypt = new OauthCrypt();
-
-        $str = $crypt->encrypt('sq0csp-t7DUu59VgDH-Lu3ZIfX3S9WLvEfA8GCSyvGCdGl48S4');
-        var_dump($str);
+        
 
         //If passwords dont match, then 
         // if(!$username){

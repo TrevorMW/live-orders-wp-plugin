@@ -85,7 +85,7 @@ class Order
                     $json['placedAt'] = Utilities::convertDateToUserFriendly($pickupDetails->getPlacedAt(), 'America/New_York');
                     $json['readyAt'] = Utilities::convertDateToUserFriendly($pickupDetails->getReadyAt(), 'America/New_York');
 
-                    if($pickupDetails->getReadyAt()){
+                    if($pickupDetails && $pickupDetails->getReadyAt()){
                         $json['timeTillReady'] = Utilities::timeDifferenceInMinutes($pickupDetails->getReadyAt());
                     } else {
                         $json['timeTillReady'] = Utilities::timeDifferenceInMinutes($pickupDetails->getPickupAt());
@@ -111,7 +111,7 @@ class Order
                     $json['placedAt'] = Utilities::convertDateToUserFriendly($deliveryDetails->getPlacedAt(), 'America/New_York');
                     $json['readyAt'] = Utilities::convertDateToUserFriendly($deliveryDetails->getReadyAt(), 'America/New_York');
                     
-                    if($deliveryDetails->getReadyAt()){
+                    if($deliveryDetails && $deliveryDetails->getReadyAt()){
                         $json['timeTillReady'] = Utilities::timeDifferenceInMinutes($pickupDetails->getReadyAt());
                     } else {
                         $json['timeTillReady'] = Utilities::timeDifferenceInMinutes($pickupDetails->getDeliveryAt());
